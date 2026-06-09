@@ -22,7 +22,7 @@ const DEFAULT_SETTINGS: Settings = {
 export default class Flexplorer extends Plugin {
 	private readonly log = initLog('', '#00ccff')
 
-	settings!: Settings
+	declare settings: Settings
 	readonly dndEngine = new DndEngine(this)
 	readonly orderManager = new OrderManager(this)
 	readonly explorerManager = new ExplorerManager(this)
