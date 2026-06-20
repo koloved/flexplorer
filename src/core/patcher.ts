@@ -41,7 +41,7 @@ export class Patcher {
 		Menu.prototype.showAtMouseEvent = function (evt) {
 			const triggerEl = evt.target as HTMLElement
 			const sortButtonLabel = i18next.t(FILE_EXPLORER_SORT_LABEL_KEY)
-			if (triggerEl.getAttribute('aria-label') !== sortButtonLabel)
+			if (triggerEl.getAttribute('aria-label') !== sortButtonLabel || !triggerEl.classList.contains('nav-action-button'))
 				return originalShowAtMouseEvent.call(this, evt)
 
 			const folderSettings = plugin.settings.items[ROOT_PATH] as FolderSettings
