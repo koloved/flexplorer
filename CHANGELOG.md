@@ -1,6 +1,14 @@
 # Changelog
 
 
+## &ensp; [` 📦 4.0.4  `](https://github.com/kh4f/flexplorer/compare/4.0.3...4.0.4)
+
+### &emsp; 🩹 Fixes
+- **Restricted sort‑menu patch to file explorer**: the custom sort menu no longer overrides the `Change sort order` button in the community plugins browser. [🡥](https://github.com/kh4f/flexplorer/commit/3c26d84) [#170](https://github.com/kh4f/flexplorer/issues/170)
+
+##### &emsp;&emsp; [Full Changelog](https://github.com/kh4f/flexplorer/compare/4.0.3...4.0.4) &ensp;•&ensp; Jun 20, 2026
+
+
 ## &ensp; [` 📦 4.0.3  `](https://github.com/kh4f/flexplorer/compare/4.0.2...4.0.3)
 
 ### &emsp; 🩹 Fixes
