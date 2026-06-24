@@ -1,6 +1,14 @@
 # Changelog
 
 
+## &ensp; [` 📦 4.0.5  `](https://github.com/kh4f/flexplorer/compare/4.0.4...4.0.5)
+
+### &emsp; ⚙️ Internal
+- **Logger lint fix**: the logger now avoids an Obsidian lint false positive by using a local console alias. [🡥](https://github.com/kh4f/flexplorer/commit/7e69026)
+
+##### &emsp;&emsp; [Full Changelog](https://github.com/kh4f/flexplorer/compare/4.0.4...4.0.5) &ensp;•&ensp; Jun 24, 2026
+
+
 ## &ensp; [` 📦 4.0.4  `](https://github.com/kh4f/flexplorer/compare/4.0.3...4.0.4)
 
 ### &emsp; 🩹 Fixes
