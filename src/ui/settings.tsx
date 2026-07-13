@@ -49,13 +49,18 @@ export class SettingsTab extends PluginSettingTab {
 					new StorageSwitchModal(
 						this.app,
 						newMode as 'per-folder' | 'global',
-						// Migrate
+						// Migrate — call plugin methods directly (executeCommandById
+						// may not await async callbacks, causing the UI to refresh
+						// before the migration finishes).
 						async () => {
 							if (newMode === 'per-folder') {
-								await plugin.app.commands.executeCommandById('flexplorer-migrate-to-per-folder')
+								await (plugin as any).runMigration()
 							} else {
-								await plugin.app.commands.executeCommandById('flexplorer-migrate-from-per-folder')
+								await (plugin as any).runReverseMigration()
 							}
+							// Ensure the local settings object is up to date
+							settings.storageMode = newMode as 'global' | 'per-folder'
+							plugin.sortExplorer()
 							this.display()
 						},
 						// Switch without migration
