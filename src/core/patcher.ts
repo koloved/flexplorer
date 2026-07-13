@@ -23,13 +23,21 @@ export class Patcher {
 		const originalGetSortedFolderItems = explorerProto.getSortedFolderItems
 
 		explorerProto.getSortedFolderItems = function (folder) {
-			const origSorted = originalGetSortedFolderItems.call(this, folder)
-			const folderSettings = plugin.settings.items[folder.path] as FolderSettings
-			return plugin.orderManager.getSortedItems(folderSettings, origSorted)
+			let items = originalGetSortedFolderItems.call(this, folder)
+
+			// Per-folder mode: filter out metadata files from the tree
+			if (plugin.settings.storageMode === 'per-folder') {
+				const metaFilename = plugin.settings.folderMetadataFilename
+				items = items.filter(item => item.file.name !== metaFilename)
+			}
+
+			const folderSettings = plugin.settings.items[folder.path] as FolderSettings | undefined
+			if (!folderSettings) return items
+			return plugin.orderManager.getSortedItems(folderSettings, items)
 		}
 
 		this.unpatchExplorer = () => explorerProto.getSortedFolderItems = originalGetSortedFolderItems
-		this.log('Explorer patched')
+		this.log('Explorer patched' + (plugin.settings.storageMode === 'per-folder' ? ' (metadata filtered)' : ''))
 	}
 
 	patchMenu() {
@@ -44,7 +52,12 @@ export class Patcher {
 			if (triggerEl.getAttribute('aria-label') !== sortButtonLabel || !triggerEl.classList.contains('nav-action-button'))
 				return originalShowAtMouseEvent.call(this, evt)
 
-			const folderSettings = plugin.settings.items[ROOT_PATH] as FolderSettings
+			const folderSettings = (plugin.settings.items[ROOT_PATH] ?? {
+				customOrder: [],
+				sortOrder: 'custom',
+				isPinned: false,
+				isHidden: false,
+			}) as FolderSettings
 			const customMenu = populateSortMenu(new Menu(), folderSettings.sortOrder, plugin, ROOT_PATH, folderSettings)
 				.addItem(item => item.setTitle('Show hidden')
 					.setChecked(plugin.settings.showHidden)

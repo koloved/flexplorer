@@ -33,7 +33,7 @@ export const populateSortMenu = (
 	return menu.setNoIcon().addSeparator()
 		.addItem(item => item.setTitle('Save as custom order')
 			.onClick(() => {
-				new ConfirmModal(plugin.app, isConfirmed => {
+				new ConfirmModal(plugin.app, 'Flexplorer', 'Save current order as custom?', isConfirmed => {
 					if (folderSettings.sortOrder === 'custom' || !isConfirmed) return
 					const folder = plugin.app.vault.getFolderByPath(folderPath)!
 					const items = plugin.getExplorerView().getSortedFolderItems(folder)

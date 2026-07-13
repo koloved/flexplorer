@@ -9,8 +9,17 @@ export type SortOrder =
 	| 'byModifiedTime'
 	| 'byModifiedTimeReverse'
 
+/** Storage modes for Flexplorer's ordering/visibility state. */
+export type StorageMode = 'global' | 'per-folder'
+
 export interface Settings {
+	/** Storage mode: 'global' (single data.json) or 'per-folder' (.flexplorer.json per folder). */
+	storageMode: StorageMode
+	/** Filename for per-folder metadata files. Only relevant when storageMode === 'per-folder'. */
+	folderMetadataFilename: string
+	/** Per-item settings, keyed by absolute path. */
 	items: Record<string, ItemSettings>
+	/** Flat list of pinned file absolute paths (legacy). */
 	pinnedFiles: string[]
 	showHidden: boolean
 	newItemPlacement: NewItemPlacement
@@ -21,6 +30,7 @@ export interface Settings {
 export interface BaseItemSettings {
 	isPinned: boolean
 	isHidden: boolean
+	[key: string]: unknown
 }
 
 export interface FolderSettings extends BaseItemSettings {

@@ -18,6 +18,7 @@
 		"build": "bun prod",
 		"typecheck": "tsc",
 		"lint": "eslint",
+		"test": "bun test",
 		"release": "bunx relion -b manifest.json -t ''"
 	},
 	"devDependencies": {

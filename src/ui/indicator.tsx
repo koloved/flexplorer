@@ -5,6 +5,8 @@ import type { AbstractFileTreeItem } from 'obsidian-typings'
 
 import type { ItemSettings } from '@/types'
 
+const DEFAULT_SETTINGS: ItemSettings = { isPinned: false, isHidden: false }
+
 const roots = new WeakMap<HTMLElement, ReturnType<typeof createRoot>>()
 
 const Indicator = ({ itemSettings }: { itemSettings: ItemSettings }) => {
@@ -21,7 +23,8 @@ const PinIndicator = () => {
 	return <div className='pin-indicator' ref={ref}/>
 }
 
-export const mountIndicator = (item: AbstractFileTreeItem<TAbstractFile>, itemSettings: ItemSettings) => {
+export const mountIndicator = (item: AbstractFileTreeItem<TAbstractFile>, itemSettings?: ItemSettings) => {
+	const safe = itemSettings ?? DEFAULT_SETTINGS
 	const indicatorEl = item.coverEl.querySelector<HTMLElement>('.fp-indicator')
 		?? item.coverEl.createDiv({ cls: 'fp-indicator' })
 	let root = roots.get(indicatorEl)
@@ -30,8 +33,8 @@ export const mountIndicator = (item: AbstractFileTreeItem<TAbstractFile>, itemSe
 		roots.set(indicatorEl, root)
 	}
 
-	root.render(<Indicator itemSettings={itemSettings}/>)
-	item.el.toggleClass('fp-hidden', itemSettings.isHidden)
+	root.render(<Indicator itemSettings={safe}/>)
+	item.el.toggleClass('fp-hidden', safe.isHidden)
 }
 
 void `css
