@@ -488,14 +488,7 @@ export default class Flexplorer extends Plugin {
 	}
 
 	private async runRemoveMetadata() {
-		if (this.settings.storageMode !== 'per-folder') {
-			new Notice('Flexplorer: Only available in per-folder mode.')
-			return
-		}
-
-		if (!(this.storage instanceof PerFolderFileStorage)) return
-
-		const storage = this.storage
+		const storage = this.storage instanceof PerFolderFileStorage ? this.storage : null
 
 		// Confirm with the user
 		new ConfirmModal(this.app, 'Remove metadata files',
@@ -505,35 +498,40 @@ export default class Flexplorer extends Plugin {
 			async isConfirmed => {
 				if (!isConfirmed) return
 
-				new Notice('Flexplorer: Removing metadata files...', 0)
+				const progressNotice = new Notice('Flexplorer: Removing metadata files...', 0)
 
 				try {
-					const folders = await storage.enumerateFoldersWithState()
-					let removed = 0
-					const adapter = this.app.vault.adapter as { exists: (p: string) => Promise<boolean>; read: (p: string) => Promise<string>; write: (p: string, d: string) => Promise<void>; remove: (p: string) => Promise<void> }
+					const adapter = this.app.vault.adapter as { exists: (p: string) => Promise<boolean>; list: (p: string) => Promise<{ files: string[]; folders: string[] }>; read: (p: string) => Promise<string>; write: (p: string, d: string) => Promise<void>; remove: (p: string) => Promise<void> }
 					const filename = this.settings.folderMetadataFilename
+					const found: string[] = []
 
-					for (const fp of folders) {
-						const metaPath = getMetadataPath(fp, filename)
+					// Scan vault for metadata files recursively
+					const scan = async (prefix: string): Promise<void> => {
+						const own = prefix ? `${prefix}/${filename}` : filename
 						try {
-							if (await adapter.exists(metaPath)) {
-								await adapter.remove(metaPath)
-								removed++
+							if (await adapter.exists(own)) found.push(own)
+						} catch {}
+						try {
+							const listing = await adapter.list(prefix)
+							for (const f of listing.folders) {
+								await scan(f)
 							}
+						} catch {}
+					}
+					await scan('')
+
+					// Delete all found metadata files
+					let removed = 0
+					for (const metaPath of found) {
+						try {
+							await adapter.remove(metaPath)
+							removed++
 						} catch (e) {
 							this.log('Failed to remove', metaPath, e)
 						}
 					}
 
-					// Also remove the root metadata file if it wasn't caught
-					try {
-						if (await adapter.exists(filename)) {
-							await adapter.remove(filename)
-							if (!folders.includes('/')) removed++
-						}
-					} catch {}
-
-					storage.clearCache()
+					storage?.clearCache()
 
 					// Switch to global mode
 					this.settings.storageMode = 'global'
@@ -544,8 +542,10 @@ export default class Flexplorer extends Plugin {
 					this.sortExplorer()
 					this.explorerManager.syncIndicators()
 
+					progressNotice.hide()
 					new Notice(`Flexplorer: Removed ${removed} metadata file(s). Switched to Single plugin data.json.`, 5000)
 				} catch (e) {
+					progressNotice.hide()
 					this.log('Remove metadata failed:', e)
 					new Notice('Flexplorer: Failed to remove metadata files. See console.', 5000)
 				}
