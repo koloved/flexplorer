@@ -144,6 +144,17 @@ export class SettingsTab extends PluginSettingTab {
 					void plugin.saveSettings()
 				}),
 			)
+		new Setting(this.containerEl)
+			.setName('Show migration commands')
+			.setDesc('Show migration and validation commands in the command palette. When disabled, these commands are still accessible from the Storage section in settings.')
+			.addToggle(toggle => toggle
+				.setValue(settings.showCommandsInPalette)
+				.onChange(show => {
+					settings.showCommandsInPalette = show
+					void plugin.saveSettings()
+					new Notice('Flexplorer: Reload Obsidian (disable/re-enable plugin) for palette changes to take effect.', 4000)
+				}),
+			)
 	}
 
 	private async hasPerFolderData(): Promise<boolean> {

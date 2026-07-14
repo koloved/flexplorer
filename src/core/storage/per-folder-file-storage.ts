@@ -90,6 +90,7 @@ export class PerFolderFileStorage implements FlexplorerStorage {
 		if (typeof settings.newItemPlacement === 'string') s.newItemPlacement = settings.newItemPlacement as never
 		if (typeof settings.persistOrderOnCreateDelete === 'boolean') s.persistOrderOnCreateDelete = settings.persistOrderOnCreateDelete
 		if (typeof settings.debugMode === 'boolean') s.debugMode = settings.debugMode
+		if (typeof settings.showCommandsInPalette === 'boolean') s.showCommandsInPalette = settings.showCommandsInPalette
 		if (typeof settings.folderMetadataFilename === 'string') {
 			this.metadataFilename = settings.folderMetadataFilename
 		}
@@ -103,6 +104,7 @@ export class PerFolderFileStorage implements FlexplorerStorage {
 			newItemPlacement: s.newItemPlacement,
 			persistOrderOnCreateDelete: s.persistOrderOnCreateDelete,
 			debugMode: s.debugMode,
+			showCommandsInPalette: s.showCommandsInPalette,
 		}
 		await this.plugin.saveData(globalData)
 	}

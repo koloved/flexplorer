@@ -25,6 +25,8 @@ export interface Settings {
 	newItemPlacement: NewItemPlacement
 	persistOrderOnCreateDelete: boolean
 	debugMode: boolean
+	/** Show migration/validation commands in the command palette. */
+	showCommandsInPalette: boolean
 }
 
 export interface BaseItemSettings {

@@ -7,6 +7,7 @@ import { OrderManager } from '@/core/order-manager'
 import { Patcher } from '@/core/patcher'
 import { SettingsTab } from '@/ui/settings'
 import { populateSortMenu } from '@/ui/menu'
+import { ConfirmModal } from '@/ui/modal'
 import { initLog, logger } from '@/utils'
 import type { FolderSettings, ItemSettings, Settings, StorageMode } from '@/types'
 
@@ -32,6 +33,7 @@ const DEFAULT_SETTINGS: Settings = {
 	newItemPlacement: 'top',
 	persistOrderOnCreateDelete: true,
 	debugMode: !!process.env.DEV,
+	showCommandsInPalette: false,
 }
 
 export type FlexplorerPlugin = Flexplorer
@@ -191,6 +193,18 @@ export default class Flexplorer extends Plugin {
 	// ── Commands ─────────────────────────────────────────────────────
 
 	private registerCommands() {
+		// Always register basic commands that are useful day-to-day
+		this.addCommand({
+			id: 'flexplorer-reload-metadata',
+			name: 'Reload folder metadata',
+			callback: () => this.reloadFolderMetadata(),
+		})
+
+		// Migration/validation commands — only in palette when the setting is on
+		// to avoid clutter for most users. They're still accessible from the
+		// Storage section in settings.
+		if (!this.settings.showCommandsInPalette) return
+
 		this.addCommand({
 			id: 'flexplorer-migrate-to-per-folder',
 			name: 'Migrate data.json to per-folder storage',
@@ -216,9 +230,9 @@ export default class Flexplorer extends Plugin {
 		})
 
 		this.addCommand({
-			id: 'flexplorer-reload-metadata',
-			name: 'Reload folder metadata',
-			callback: () => this.reloadFolderMetadata(),
+			id: 'flexplorer-remove-metadata',
+			name: 'Remove per-folder metadata files',
+			callback: () => this.runRemoveMetadata(),
 		})
 	}
 
@@ -471,6 +485,71 @@ export default class Flexplorer extends Plugin {
 			this.explorerManager.syncIndicators()
 			new Notice('Flexplorer: Metadata reloaded.', 2000)
 		}
+	}
+
+	private async runRemoveMetadata() {
+		if (this.settings.storageMode !== 'per-folder') {
+			new Notice('Flexplorer: Only available in per-folder mode.')
+			return
+		}
+
+		if (!(this.storage instanceof PerFolderFileStorage)) return
+
+		const storage = this.storage
+
+		// Confirm with the user
+		new ConfirmModal(this.app, 'Remove metadata files',
+			`This will delete ALL .flexplorer.json files from every folder in the vault.\n\n` +
+			`Custom ordering, hidden, and pinned data will be lost.\n\n` +
+			`Storage mode will be switched to "Single plugin data.json". Continue?`,
+			async isConfirmed => {
+				if (!isConfirmed) return
+
+				new Notice('Flexplorer: Removing metadata files...', 0)
+
+				try {
+					const folders = await storage.enumerateFoldersWithState()
+					let removed = 0
+					const adapter = this.app.vault.adapter as { exists: (p: string) => Promise<boolean>; read: (p: string) => Promise<string>; write: (p: string, d: string) => Promise<void>; remove: (p: string) => Promise<void> }
+					const filename = this.settings.folderMetadataFilename
+
+					for (const fp of folders) {
+						const metaPath = getMetadataPath(fp, filename)
+						try {
+							if (await adapter.exists(metaPath)) {
+								await adapter.remove(metaPath)
+								removed++
+							}
+						} catch (e) {
+							this.log('Failed to remove', metaPath, e)
+						}
+					}
+
+					// Also remove the root metadata file if it wasn't caught
+					try {
+						if (await adapter.exists(filename)) {
+							await adapter.remove(filename)
+							if (!folders.includes('/')) removed++
+						}
+					} catch {}
+
+					storage.clearCache()
+
+					// Switch to global mode
+					this.settings.storageMode = 'global'
+					this.settings.items = {}
+					this.settings.pinnedFiles = []
+					await this.switchStorageBackend('global')
+					await this.saveSettings()
+					this.sortExplorer()
+					this.explorerManager.syncIndicators()
+
+					new Notice(`Flexplorer: Removed ${removed} metadata file(s). Switched to Single plugin data.json.`, 5000)
+				} catch (e) {
+					this.log('Remove metadata failed:', e)
+					new Notice('Flexplorer: Failed to remove metadata files. See console.', 5000)
+				}
+			}).open()
 	}
 
 	// ── Vault events ─────────────────────────────────────────────────
